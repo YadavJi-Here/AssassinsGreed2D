@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - Ground
+  - Bush
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: 4
+    uniqueID: 4239337709
+    locked: 0
+  - name: 3
+    uniqueID: 869682439
+    locked: 0
+  - name: 2
+    uniqueID: 3189175801
+    locked: 0
+  - name: 1
+    uniqueID: 2004926381
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Player
+    uniqueID: 948203991
+    locked: 0
+  - name: TreesBush
+    uniqueID: 1241464987
+    locked: 0
+  - name: Ground
+    uniqueID: 2183227979
+    locked: 0
+  - name: Grass
+    uniqueID: 312120807
+    locked: 0
+  m_RenderingLayers:
+  - Default
