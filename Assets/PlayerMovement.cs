@@ -19,25 +19,36 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         float move = Input.GetAxis("Horizontal");
-        rb.linearVelocity = new Vector2(move * moveSpeed, rb.linearVelocity.y); // fixed typo: linearVelocity ? velocity
+        rb.linearVelocity = new Vector2(move * moveSpeed, rb.linearVelocity.y);
 
+        // Set running animation
+        animator.SetFloat("Run", Mathf.Abs(move));
+
+        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            isGrounded = false;
             animator.SetBool("Jump", true);
         }
 
-        // Flip the player when changing direction
+        // Flip sprite
         if (move < 0f && facingRight)
             Flip();
         else if (move > 0f && !facingRight)
             Flip();
 
-        animator.SetFloat("Run", Mathf.Abs(move)); // simpler and more accurate
-
+        // Attack handling
         if (Input.GetMouseButtonDown(0))
         {
-            animator.SetTrigger("Attack");
+            if (isGrounded)
+            {
+                animator.SetTrigger("Attack");
+            }
+            else
+            {
+                animator.SetTrigger("JumpAttack");
+            }
         }
     }
 
@@ -66,12 +77,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Handle hiding behind bush using trigger area
+    // Handle hiding behind bush
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Bush"))
         {
-            spriteRenderer.sortingOrder = 0; // Behind bush
+            spriteRenderer.sortingOrder = 0;
         }
     }
 
@@ -79,7 +90,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.CompareTag("Bush"))
         {
-            spriteRenderer.sortingOrder = 2; // In front of bush
+            spriteRenderer.sortingOrder = 2;
         }
     }
 }
