@@ -5,6 +5,8 @@ public class PlayerStealth : MonoBehaviour
     private SpriteRenderer sr;
     private Coroutine fadeCoroutine;
 
+    [SerializeField] private LayerMask bushLayer;
+
     private void Start()
     {
         sr = GetComponent<SpriteRenderer>();
@@ -12,23 +14,27 @@ public class PlayerStealth : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Bush"))
+        if (IsBushLayer(other.gameObject))
         {
-            // Cancel previous fade if running
             if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-            fadeCoroutine = StartCoroutine(FadeToAlpha(0f, 0.25f)); // Fade out
-            sr.sortingOrder = 0; // Behind bush
+            fadeCoroutine = StartCoroutine(FadeToAlpha(0f, 0.05f)); // fade out
+            sr.sortingOrder = 0; // draw behind bush
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Bush"))
+        if (IsBushLayer(other.gameObject))
         {
             if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-            fadeCoroutine = StartCoroutine(FadeToAlpha(1f, 0.25f)); // Fade in
-            sr.sortingOrder = 2; // In front of bush
+            fadeCoroutine = StartCoroutine(FadeToAlpha(1f, 0.25f)); // fade in
+            sr.sortingOrder = 2; // draw in front
         }
+    }
+
+    private bool IsBushLayer(GameObject obj)
+    {
+        return ((1 << obj.layer) & bushLayer) != 0;
     }
 
     private System.Collections.IEnumerator FadeToAlpha(float targetAlpha, float duration)
@@ -40,10 +46,10 @@ public class PlayerStealth : MonoBehaviour
         {
             time += Time.deltaTime;
             float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, time / duration);
-            sr.color = new Color(1f, 1f, 1f, newAlpha);
+            sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, newAlpha);
             yield return null;
         }
 
-        sr.color = new Color(1f, 1f, 1f, targetAlpha);
+        sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, targetAlpha);
     }
 }
