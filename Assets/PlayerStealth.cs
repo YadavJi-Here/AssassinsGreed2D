@@ -1,7 +1,10 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerStealth : MonoBehaviour
 {
+    public bool isHidden = false;
+
     private SpriteRenderer sr;
     private Coroutine fadeCoroutine;
 
@@ -16,9 +19,7 @@ public class PlayerStealth : MonoBehaviour
     {
         if (IsBushLayer(other.gameObject))
         {
-            if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-            fadeCoroutine = StartCoroutine(FadeToAlpha(0f, 0.05f)); // fade out
-            sr.sortingOrder = 0; // draw behind bush
+            SetHidden(true);
         }
     }
 
@@ -26,8 +27,24 @@ public class PlayerStealth : MonoBehaviour
     {
         if (IsBushLayer(other.gameObject))
         {
-            if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-            fadeCoroutine = StartCoroutine(FadeToAlpha(1f, 0.25f)); // fade in
+            SetHidden(false);
+        }
+    }
+
+    public void SetHidden(bool hidden)
+    {
+        isHidden = hidden;
+
+        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
+
+        if (hidden)
+        {
+            fadeCoroutine = StartCoroutine(FadeToAlpha(0f, 0.05f)); // fade out fast
+            sr.sortingOrder = 0; // draw behind bush
+        }
+        else
+        {
+            fadeCoroutine = StartCoroutine(FadeToAlpha(1f, 0.25f)); // fade in slower
             sr.sortingOrder = 2; // draw in front
         }
     }
@@ -37,7 +54,7 @@ public class PlayerStealth : MonoBehaviour
         return ((1 << obj.layer) & bushLayer) != 0;
     }
 
-    private System.Collections.IEnumerator FadeToAlpha(float targetAlpha, float duration)
+    private IEnumerator FadeToAlpha(float targetAlpha, float duration)
     {
         float startAlpha = sr.color.a;
         float time = 0f;
