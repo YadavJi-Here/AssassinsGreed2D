@@ -1,7 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
+    public Transform attackPoint;
+    public float attackRadius = 1f;
+    public LayerMask attackLayer;
+    public Text health;
     public Animator animator;
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
@@ -9,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isGrounded = false;
     private bool facingRight = true;
     private SpriteRenderer spriteRenderer;
-
+    public int MaxHealth = 5;
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -18,6 +23,13 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (MaxHealth <= 0)
+        {
+            Die();
+        }
+
+        health.text = MaxHealth.ToString();
+
         float move = Input.GetAxis("Horizontal");
         rb.linearVelocity = new Vector2(move * moveSpeed, rb.linearVelocity.y);
 
@@ -92,5 +104,39 @@ public class PlayerMovement : MonoBehaviour
         {
             spriteRenderer.sortingOrder = 2;
         }
+    }
+
+    public void Attack()
+    {
+        Collider2D collInfo = Physics2D.OverlapCircle(attackPoint.position, attackRadius, attackLayer);
+        if (collInfo)
+        {
+            if(collInfo.gameObject.GetComponent<EnemyPatrolAttack>() != null)
+            {
+                collInfo.gameObject.GetComponent<EnemyPatrolAttack>().TakeDamage(1);
+            }
+        }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null)
+        {
+            return;
+        }
+        Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (MaxHealth <= 0) {
+            return;
+        }
+        MaxHealth -= damage;
+    }
+
+    void Die()
+    {
+        Debug.Log("Player Dies.");
     }
 }

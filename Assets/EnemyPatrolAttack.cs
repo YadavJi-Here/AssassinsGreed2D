@@ -11,13 +11,19 @@ public class EnemyPatrolAttack : MonoBehaviour
     public Transform player;
     public float attackRange = 2f;
     public LayerMask obstacleMask;
-    public float visionDistance = 5f;
+    public float visionDistance = 10f;
 
     private Animator animator;
     private Vector3 startPosition;
     private bool movingRight = true;
     private bool isPlayerVisible = false;
     private Vector3 originalScale;
+
+    public Transform attackPoint;
+    public float attackRadius = 1f;
+    public LayerMask attackLayer;
+
+    public int maxHealth = 5;
 
     void Start()
     {
@@ -28,6 +34,11 @@ public class EnemyPatrolAttack : MonoBehaviour
 
     void Update()
     {
+        if(maxHealth <= 0)
+        {
+            Die();
+        }
+
         if (player == null)
         {
             Patrol();
@@ -51,6 +62,28 @@ public class EnemyPatrolAttack : MonoBehaviour
             animator.SetBool("IsAttacking", false);
             Patrol();
         }
+    }
+
+    public void Attack() {
+        Collider2D collInfo = Physics2D.OverlapCircle(attackPoint.position, attackRadius, attackLayer);
+
+        if (collInfo)
+        {
+            if (collInfo.gameObject.GetComponent<PlayerMovement>() != null)
+            {
+                collInfo.gameObject.GetComponent<PlayerMovement>().TakeDamage(1);
+            }
+        }
+
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if(maxHealth <= 0)
+        {
+            return;
+        }
+        maxHealth -= damage;
     }
 
     void Patrol()
@@ -113,6 +146,16 @@ public class EnemyPatrolAttack : MonoBehaviour
         {
             Gizmos.color = Color.red;
             Gizmos.DrawLine(transform.position, player.position);
+
+            if (attackPoint == null) return;
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
         }
+    }
+
+    void Die()
+    {
+        Debug.Log(this.transform.name + "Enemy Dies.");
+        Destroy(this.gameObject);
     }
 }
