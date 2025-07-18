@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Bush
+  - Coin
+  - VictoryPoint
   layers:
   - Default
   - TransparentFX
