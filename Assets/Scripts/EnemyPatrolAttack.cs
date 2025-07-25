@@ -39,7 +39,7 @@ public class EnemyPatrolAttack : MonoBehaviour
             return;
         }
 
-        if(maxHealth <= 0)
+        if (maxHealth <= 0)
         {
             Die();
         }
@@ -69,7 +69,8 @@ public class EnemyPatrolAttack : MonoBehaviour
         }
     }
 
-    public void Attack() {
+    public void Attack()
+    {
         Collider2D collInfo = Physics2D.OverlapCircle(attackPoint.position, attackRadius, attackLayer);
 
         if (collInfo)
@@ -84,7 +85,7 @@ public class EnemyPatrolAttack : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if(maxHealth <= 0)
+        if (maxHealth <= 0)
         {
             return;
         }
