@@ -17,19 +17,23 @@ public class PlayerMovement : MonoBehaviour
     private bool facingRight = true;
     private SpriteRenderer spriteRenderer;
     public int MaxHealth = 5;
+    private bool isDead = false;
+
+    private GameManager gameManager;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // Find the GameManager in the scene
+        gameManager = FindObjectOfType<GameManager>();
     }
 
     void Update()
     {
-        if (MaxHealth <= 0)
-        {
-            Die();
-        }
+        if (isDead || (gameManager != null && !gameManager.isGameActive))
+            return;
 
         coinText.text = currentCoin.ToString();
         health.text = MaxHealth.ToString();
@@ -37,10 +41,8 @@ public class PlayerMovement : MonoBehaviour
         float move = Input.GetAxis("Horizontal");
         rb.linearVelocity = new Vector2(move * moveSpeed, rb.linearVelocity.y);
 
-        // Set running animation
         animator.SetFloat("Run", Mathf.Abs(move));
 
-        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -48,23 +50,22 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("Jump", true);
         }
 
-        // Flip sprite
         if (move < 0f && facingRight)
             Flip();
         else if (move > 0f && !facingRight)
             Flip();
 
-        // Attack handling
         if (Input.GetMouseButtonDown(0))
         {
             if (isGrounded)
-            {
                 animator.SetTrigger("Attack");
-            }
             else
-            {
                 animator.SetTrigger("JumpAttack");
-            }
+        }
+
+        if (MaxHealth <= 0)
+        {
+            Die();
         }
     }
 
@@ -95,25 +96,22 @@ public class PlayerMovement : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // Handle hiding behind bush
         if (other.CompareTag("Bush"))
         {
             spriteRenderer.sortingOrder = 0;
         }
 
-        // Handle coin collection
         if (other.CompareTag("Coin"))
         {
             currentCoin += 1;
             other.gameObject.transform.GetChild(0).GetComponent<Animator>().SetTrigger("Collect");
-            Destroy(other.gameObject, 1f); // Delay to allow animation to play
+            Destroy(other.gameObject, 1f);
         }
 
-        if (other.gameObject.tag == "VictoryPoint")
+        if (other.CompareTag("VictoryPoint"))
         {
             Debug.Log("Victory Point Reached!");
         }
-
     }
 
     void OnTriggerExit2D(Collider2D other)
@@ -140,25 +138,33 @@ public class PlayerMovement : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         if (attackPoint == null)
-        {
             return;
-        }
+
         Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
     }
 
     public void TakeDamage(int damage)
     {
-        if (MaxHealth <= 0)
-        {
+        if (MaxHealth <= 0 || isDead)
             return;
-        }
+
         MaxHealth -= damage;
     }
 
     void Die()
     {
-        Debug.Log("Player Dies.");
-        FindObjectOfType<GameManager>().isGameActive = false;
-        Destroy(this.gameObject);
+        if (isDead) return;
+
+        isDead = true;
+        rb.linearVelocity = Vector2.zero;
+        if (gameManager != null)
+        {
+            gameManager.GameOver();
+        }
+        else
+        {
+            Debug.LogWarning("GameManager not found in Die()");
+        }
+        rb.bodyType = RigidbodyType2D.Static;
     }
 }
