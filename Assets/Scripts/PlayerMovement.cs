@@ -57,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            FindObjectOfType<AudioManager>().PlayAudio();
+
             if (isGrounded)
                 animator.SetTrigger("Attack");
             else

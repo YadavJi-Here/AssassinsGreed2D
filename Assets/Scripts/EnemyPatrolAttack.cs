@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(AudioSource))]
 public class EnemyPatrolAttack : MonoBehaviour
 {
     [Header("Patrol Settings")]
@@ -14,34 +15,42 @@ public class EnemyPatrolAttack : MonoBehaviour
     public float visionDistance = 10f;
 
     private Animator animator;
+    private AudioSource audioSource;
     private Vector3 startPosition;
     private bool movingRight = true;
     private bool isPlayerVisible = false;
     private Vector3 originalScale;
 
+    [Header("Attack Info")]
     public Transform attackPoint;
     public float attackRadius = 1f;
     public LayerMask attackLayer;
 
+    [Header("Audio Clips")]
+    public AudioClip attackClip;
+    public AudioClip deathClip;
+
+    [Header("Health Settings")]
     public int maxHealth = 5;
+    private bool isDead = false;
 
     void Start()
     {
         animator = GetComponent<Animator>();
+        audioSource = GetComponent<AudioSource>();
         startPosition = transform.position;
         originalScale = transform.localScale;
     }
 
     void Update()
     {
-        if (FindObjectOfType<GameManager>().isGameActive == false)
-        {
+        if (isDead || FindObjectOfType<GameManager>().isGameActive == false)
             return;
-        }
 
         if (maxHealth <= 0)
         {
             Die();
+            return;
         }
 
         if (player == null)
@@ -50,16 +59,12 @@ public class EnemyPatrolAttack : MonoBehaviour
             return;
         }
 
-        // Check if player is in vision
         isPlayerVisible = CanSeePlayer();
 
         if (isPlayerVisible)
         {
-            // Attack
             animator.SetBool("IsAttacking", true);
             animator.SetBool("IsWalking", false);
-
-            // Face player
             FacePlayer();
         }
         else
@@ -71,42 +76,45 @@ public class EnemyPatrolAttack : MonoBehaviour
 
     public void Attack()
     {
+        if (attackClip != null)
+            audioSource.PlayOneShot(attackClip);
+
         Collider2D collInfo = Physics2D.OverlapCircle(attackPoint.position, attackRadius, attackLayer);
 
         if (collInfo)
         {
-            if (collInfo.gameObject.GetComponent<PlayerMovement>() != null)
+            PlayerMovement playerScript = collInfo.gameObject.GetComponent<PlayerMovement>();
+            if (playerScript != null)
             {
-                collInfo.gameObject.GetComponent<PlayerMovement>().TakeDamage(1);
+                playerScript.TakeDamage(1);
             }
         }
-
     }
 
     public void TakeDamage(int damage)
     {
+        if (isDead) return;
+
+        maxHealth -= damage;
+
         if (maxHealth <= 0)
         {
-            return;
+            Die();
         }
-        maxHealth -= damage;
     }
 
     void Patrol()
     {
         animator.SetBool("IsWalking", true);
 
-        // Move
         float moveDirection = movingRight ? 1 : -1;
         transform.Translate(Vector2.right * moveDirection * patrolSpeed * Time.deltaTime);
 
-        // Flip back to patrol direction
         if (movingRight)
             transform.localScale = new Vector3(Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
         else
             transform.localScale = new Vector3(-Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
 
-        // Change direction at patrol limits
         if (movingRight && transform.position.x >= startPosition.x + patrolDistance)
             movingRight = false;
         else if (!movingRight && transform.position.x <= startPosition.x - patrolDistance)
@@ -126,28 +134,27 @@ public class EnemyPatrolAttack : MonoBehaviour
         Vector2 directionToPlayer = player.position - transform.position;
         float distanceToPlayer = directionToPlayer.magnitude;
 
-        // 1. Out of attack range?
-        if (distanceToPlayer > attackRange)
+        if (distanceToPlayer > attackRange || distanceToPlayer > visionDistance)
             return false;
 
-        // 2. Out of vision distance?
-        if (distanceToPlayer > visionDistance)
-            return false;
-
-        // 3. Check obstacles (bushes etc.)
         RaycastHit2D hit = Physics2D.Linecast(transform.position, player.position, obstacleMask);
-        if (hit.collider != null)
-        {
-            // There's something blocking view
-            return false;
-        }
+        return hit.collider == null;
+    }
 
-        return true;
+    void Die()
+    {
+        isDead = true;
+        animator.SetTrigger("Die");
+
+        if (deathClip != null)
+            audioSource.PlayOneShot(deathClip);
+
+        // Optional: delay destruction to allow death animation and sound to play
+        Destroy(gameObject, 2f);
     }
 
     void OnDrawGizmosSelected()
     {
-        // Optional: visualize vision in editor
         if (player != null)
         {
             Gizmos.color = Color.red;
@@ -157,11 +164,5 @@ public class EnemyPatrolAttack : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
         }
-    }
-
-    void Die()
-    {
-        Debug.Log(this.transform.name + "Enemy Dies.");
-        Destroy(this.gameObject);
     }
 }
